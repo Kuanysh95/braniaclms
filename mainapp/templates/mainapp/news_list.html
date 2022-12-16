@@ -27,7 +27,7 @@
             {{ news_item.created_at|date:"d.m.Y H:i" }}
           </h6>
           <!--
-          <p class="card-text">{{ news_item.intro }}</p>
+          <p class="card-text">{# {{ news_item.intro }} #}</p>
           -->
           <p class="card-text">{{ news_item.preamble }}</p>
           <div class="row">
@@ -35,7 +35,12 @@
               <a href="{% url 'mainapp:news_detail' news_item.pk %}"
                  class="card-link">Подробнее</a>
             </div>
-            {% if perms.mainapp.chane_news %}
+            <!--
+            perms - переменная, которая автоматически передаётся в шаблон;
+            в не лежат все необходимы права доступа;
+            они передаются за счёт миксина PermissionRequiredMixin
+             -->
+            {% if perms.mainapp.change_news %}
             <div class="col-1 text-center">
               <a href="{% url 'mainapp:news_update' news_item.pk %}">
                 <i class="far fa-edit"></i>
@@ -85,7 +90,7 @@
       </div>
     </div>
 
-    {% if perms.mainap.add_news %}
+    {% if perms.mainapp.add_news %}
       <a class="btn btn-primary btn-block" role="button"
          href="{% url 'mainapp:news_create' %}">
         Добавить новость

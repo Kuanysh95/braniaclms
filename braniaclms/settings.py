@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
+import os
 # ----- определение базовой дирректории, в которой находится проект ------------
 from pathlib import Path
 
@@ -28,27 +29,35 @@ SECRET_KEY = \
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
 # ALLOWED_HOSTS нужен, когда мы проект заливаем на какой-либо сервер.
+ALLOWED_HOSTS = ['*']  # поставили '*' для django-debug-toolbar
+
+if DEBUG:
+    INTERNAL_IPS = [
+        '127.0.0.1'
+    ]
+
 
 # Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
-    'django.contrib.auth',
+    'django.contrib.auth',  # модуль аунтификации
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
     'crispy_forms',  # библиотека для красивого вывода форм
-    'social_django',
+    'debug_toolbar',  # для подключения django-debug-toolbar
+    'social_django',  # для авторизации через GitHub
 
-    'authapp',
+    'authapp',  # регистрируем приложение аунтификации
     'mainapp',  # обязательно прописываем все создаваемые приложения здесь
 ]
 
 MIDDLEWARE = [
+    # 'django.middleware.cache.UpdateCacheMiddleware',  # кэширование сайта
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -56,6 +65,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',  # django-debut-toolbar
+    # 'django.middleware.cache.FetchFromCacheMiddleware',  # кэширование сайта
 ]
 
 ROOT_URLCONF = 'braniaclms.urls'  # точка входа
@@ -154,20 +165,23 @@ AUTH_USER_MODEL = 'authapp.User'  # дописать путь до нашей н
 # После этого возникает деградация данных, т.е. не соответствие с базой данных
 # Как избежать её?
 # 1) Останавливаем сервер
-# 2) Удаляем  базу db.sqlite3
+# 2) Удаляем базу db.sqlite3
 # 3) Делаем заново migrate
 #    python3 manage.py migrate
 # Создался новый чисты экземпляр базы с нашим созданным пользователем
 
+# URL куда нас отправит система после того, как мы зашли в систему
 LOGIN_REDIRECT_URL = 'mainapp:index'
-
+# URL куда нас отправит система после того, как мы вышли из системы
 LOGOUT_REDIRECT_URL = 'mainapp:index'
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
+# Необходимо расширить BACKENDS для аутентификации
+# В данном контексте некий код, который обрабатывает то или иное поведение.
 AUTHENTICATION_BACKENDS = (
     'social_core.backends.github.GithubOAuth2',  # 2-я версия OAuth
-    'django.contrib.auth.backends.ModelBackend',  # базовый
+    'django.contrib.auth.backends.ModelBackend',  # базовый (из коробки)
 )
 
 # REST_FRAMEWORK = { 'DEFAULT_PAGINATION_CLASS':
@@ -186,3 +200,85 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'  # сообщаем crispy_forms о том,
 # что мы используем bootstrap4 и на основе него нам нужно разукрашивать
 # все формы
 
+
+# настройки кэша (стандартный порт для redis 6379)
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient"
+        }
+    }
+}
+
+# насторойки для celery
+CELERY_BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://loclhost:6379'
+
+# EMAIL_HOST = ''
+# EMAIL_PORT = 25
+# EMAIL_HOST_USER = ''
+# EMAIL_HOST_PASSWORD = ''
+# EMAIL_USE_SSL = True
+
+# # для yandex
+# EMAIL_HOST = 'smtp.yandex.ru'
+# EMAIL_PORT = 465
+# EMAIL_HOST_USER = 'myname@yandex.ru'
+# EMAIL_HOST_PASSWORD = 'mypassword'
+# EMAIL_USE_SSL = True
+
+# # Для google
+# EMAIL_USE_SSL = False
+# EMAIL_USE_TLS = True
+
+# для локльного тестирования
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = 'emails-tmp'  # каталог для хранения
+
+
+# # FILE-handler
+# # нужно создать папку log и добавить её в .gitignore !!!
+# LOG_FILE = BASE_DIR / "log" / "main_log.log"
+#
+# LOGGING = {
+#     "version": 1,
+#     "disable_existing_loggers": False,
+#     "formatters": {
+#         "console": {
+#             "format": "[%(asctime)s] %(levelname)s %(name)s (%(lineno)d) %("
+#                       "message)s"
+#         },
+#     },
+#     "handlers": {
+#         "file": {
+#             "level": "INFO",
+#             "class": "logging.FileHandler",
+#             "filename": LOG_FILE,
+#             "formatter": "console",
+#         },
+#         "console": {"class": "logging.StreamHandler", "formatter": "console"},
+#     },
+#     "loggers": {
+#         "django": {"level": "INFO", "handlers": ["file", "console"]},
+#     },
+# }
+
+# # Самый простой вариант создания логов STREAM-handler
+# LOGGING = {
+#     "version": 1,
+#     "disable_existing_loggers": False,
+#     "formatters": {  # позволяют менять формат логов
+#         "console": {
+#             "format": "[%(asctime)s] %(levelname)s %(name)s (%(lineno)d)%("
+#                   "message)s"
+#         },
+#     },
+#     "handlers": {
+#         "console": {"class": "logging.StreamHandler", "formatter": "console"},
+#     },
+#     "loggers": {
+#         "django": {"level": "INFO", "handlers": ["console"]},
+#     },
+# }

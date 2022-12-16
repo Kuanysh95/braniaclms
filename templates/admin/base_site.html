@@ -1,9 +1,10 @@
 {% extends 'admin/base.html' %}
 {% load static %}
-{% block title %}
-  {% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} |
-  {{ site_title|default:_('Django site admin') }}
-{% endblock %}
+
+{# {% block title %} #}
+  {# {% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | #}
+  {# {{ site_title|default:_('Django site admin') }} #}
+{# {% endblock %} #}
 
 {% block branding %}
   <h1 id="branding">
@@ -11,6 +12,11 @@
     <img src="{% static 'img/logo.png' %}" />
   </a>
   </h1>
+{% endblock %}
+
+{% block welcome-msg %}
+  Message!
+  {{ block.super }}
 {% endblock %}
 
 {% block nav-global %}{%  endblock %}
