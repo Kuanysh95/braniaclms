@@ -1,20 +1,10 @@
-import pickle
 from http import HTTPStatus
-from unittest import mock
 
-from django.conf import settings
-from django.contrib.staticfiles.testing import StaticLiveServerTestCase
-from django.core import mail as django_mail
 from django.test import Client, TestCase
 from django.urls import reverse
-from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.webdriver import WebDriver
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
 
 from authapp import models as authapp_models
 from mainapp import models as mainapp_models
-from mainapp import tasks as mainapp_tasks
 
 
 class TestNewsPage(TestCase):
@@ -106,6 +96,10 @@ class TestNewsPage(TestCase):
         self.assertTrue(news_obj.deleted)
 
 
+import pickle
+from unittest import mock
+
+
 class TestCoursesWithMock(TestCase):
     fixtures = (
         "authapp/fixtures/001_user_admin.json",
@@ -126,6 +120,11 @@ class TestCoursesWithMock(TestCase):
             self.assertTrue(mocked_cache.called)
 
 
+from django.core import mail as django_mail
+
+from mainapp import tasks as mainapp_tasks
+
+
 class TestTaskMailSend(TestCase):
     fixtures = ("authapp/fixtures/001_user_admin.json",)
 
@@ -134,6 +133,14 @@ class TestTaskMailSend(TestCase):
         user_obj = authapp_models.CustomUser.objects.first()
         mainapp_tasks.send_feedback_mail({"user_id": user_obj.id, "message": message_text})
         self.assertEqual(django_mail.outbox[0].body, message_text)
+
+
+from django.conf import settings
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.webdriver import WebDriver
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 class TestNewsSelenium(StaticLiveServerTestCase):
@@ -152,8 +159,8 @@ class TestNewsSelenium(StaticLiveServerTestCase):
         button_enter = WebDriverWait(self.selenium, 5).until(
             EC.visibility_of_element_located((By.CSS_SELECTOR, '[type="submit"]'))
         )
-        self.selenium.find_element("id", "id_username").send_keys("admin")
-        self.selenium.find_element("id", "id_password").send_keys("admin")
+        self.selenium.find_element_by_id("id_username").send_keys("admin")
+        self.selenium.find_element_by_id("id_password").send_keys("admin")
         button_enter.click()
         # Wait for footer
         WebDriverWait(self.selenium, 5).until(EC.visibility_of_element_located((By.CLASS_NAME, "mt-auto")))
